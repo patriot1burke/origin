@@ -27,7 +27,7 @@ import (
 
 	oauthapi "github.com/openshift/api/oauth/v1"
 	oauthclient "github.com/openshift/client-go/oauth/clientset/versioned/typed/oauth/v1"
-	configapi "github.com/openshift/origin/pkg/cmd/server/api"
+	configapi "github.com/openshift/origin/pkg/cmd/server/apis/config"
 	cmdutil "github.com/openshift/origin/pkg/cmd/util"
 	clientregistry "github.com/openshift/origin/pkg/oauth/registry/oauthclient"
 	oauthutil "github.com/openshift/origin/pkg/oauth/util"
@@ -376,7 +376,7 @@ func (c *OAuthServerConfig) getAuthenticationHandler(mux mux, errorHandler handl
 				}
 
 				// Since we're redirecting to a local login page, we don't need to force absolute URL resolution
-				redirectors.Add(identityProvider.Name, redirector.NewRedirector(nil, redirectLoginPath+"?then=${url}"))
+				redirectors.Add(identityProvider.Name, redirector.NewRedirector(nil, redirectLoginPath+"?then=${server-relative-url}"))
 
 				var loginTemplateFile string
 				if c.ExtraOAuthConfig.Options.Templates != nil {

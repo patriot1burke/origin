@@ -1,5 +1,5 @@
 /*
-Copyright 2017 The Kubernetes Authors.
+Copyright 2018 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ package externalversions
 import (
 	"fmt"
 	v1beta1 "github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
+	v1alpha1 "github.com/kubernetes-incubator/service-catalog/pkg/apis/settings/v1alpha1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -51,7 +52,7 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=Servicecatalog, Version=V1beta1
+	// Group=servicecatalog.k8s.io, Version=v1beta1
 	case v1beta1.SchemeGroupVersion.WithResource("clusterservicebrokers"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Servicecatalog().V1beta1().ClusterServiceBrokers().Informer()}, nil
 	case v1beta1.SchemeGroupVersion.WithResource("clusterserviceclasses"):
@@ -62,6 +63,10 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Servicecatalog().V1beta1().ServiceBindings().Informer()}, nil
 	case v1beta1.SchemeGroupVersion.WithResource("serviceinstances"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Servicecatalog().V1beta1().ServiceInstances().Informer()}, nil
+
+		// Group=settings.servicecatalog.k8s.io, Version=v1alpha1
+	case v1alpha1.SchemeGroupVersion.WithResource("podpresets"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Settings().V1alpha1().PodPresets().Informer()}, nil
 
 	}
 

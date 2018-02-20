@@ -17,7 +17,7 @@ import (
 	kubeapiserver "k8s.io/kubernetes/pkg/master"
 	kcorestorage "k8s.io/kubernetes/pkg/registry/core/rest"
 
-	configapi "github.com/openshift/origin/pkg/cmd/server/api"
+	configapi "github.com/openshift/origin/pkg/cmd/server/apis/config"
 	"github.com/openshift/origin/pkg/cmd/server/bootstrappolicy"
 	kubernetes "github.com/openshift/origin/pkg/cmd/server/kubernetes/master"
 	cmdutil "github.com/openshift/origin/pkg/cmd/util"
@@ -241,6 +241,14 @@ func (c *MasterConfig) Run(stopCh <-chan struct{}) error {
 		if err := c.AuditBackend.Run(stopCh); err != nil {
 			return fmt.Errorf("failed to run the audit backend: %v", err)
 		}
+	}
+
+	if GRPCThreadLimit > 0 {
+		if err := aggregatedAPIServer.GenericAPIServer.AddHealthzChecks(NewGRPCStuckThreads()); err != nil {
+			return err
+		}
+		// We start a separate gofunc that will panic for us because nothing is watching healthz at the moment.
+		PanicOnGRPCStuckThreads(10*time.Second, stopCh)
 	}
 
 	// add post-start hooks

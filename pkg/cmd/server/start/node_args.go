@@ -17,8 +17,8 @@ import (
 	"k8s.io/kubernetes/pkg/master/ports"
 
 	"github.com/openshift/origin/pkg/cmd/server/admin"
-	configapi "github.com/openshift/origin/pkg/cmd/server/api"
-	configapiv1 "github.com/openshift/origin/pkg/cmd/server/api/v1"
+	configapi "github.com/openshift/origin/pkg/cmd/server/apis/config"
+	configapiv1 "github.com/openshift/origin/pkg/cmd/server/apis/config/v1"
 	cmdutil "github.com/openshift/origin/pkg/cmd/util"
 	utilflags "github.com/openshift/origin/pkg/cmd/util/flags"
 )
@@ -51,6 +51,10 @@ func NewNetworkComponentFlag() *utilflags.ComponentFlag {
 type NodeArgs struct {
 	// Components is the set of enabled components.
 	Components *utilflags.ComponentFlag
+
+	// WriteFlagsOnly will print flags to run the Kubelet from the provided arguments rather than launching
+	// the Kubelet itself.
+	WriteFlagsOnly bool
 
 	// NodeName is the hostname to identify this node with the master.
 	NodeName string

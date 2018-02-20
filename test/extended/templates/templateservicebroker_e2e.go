@@ -25,7 +25,7 @@ import (
 	templateapiv1 "github.com/openshift/api/template/v1"
 	authorizationapi "github.com/openshift/origin/pkg/authorization/apis/authorization"
 	"github.com/openshift/origin/pkg/bulk"
-	configapi "github.com/openshift/origin/pkg/cmd/server/api"
+	configapi "github.com/openshift/origin/pkg/cmd/server/apis/config"
 	"github.com/openshift/origin/pkg/cmd/server/bootstrappolicy"
 	templateapi "github.com/openshift/origin/pkg/template/apis/template"
 	"github.com/openshift/origin/pkg/template/client/internalversion"
@@ -374,7 +374,19 @@ var _ = g.Describe("[Conformance][templates] templateservicebroker end-to-end te
 			provision()
 			bind()
 			unbind()
+			// unbinding a second time should result in a gone message, but not an error
+			unbind()
 			deprovision()
+
+			provision()
+			bind()
+			g.By("deleting the template instance that was bound")
+			err := cli.Run("delete").Args("templateinstance", "--all").Execute()
+			o.Expect(err).NotTo(o.HaveOccurred())
+			unbind()
+			// unbinding a second time should result in a gone message, but not an error
+			unbind()
+
 		})
 	})
 })

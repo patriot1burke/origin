@@ -10,7 +10,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apiserver/pkg/admission"
-	admissionmetrics "k8s.io/apiserver/pkg/admission/metrics"
 	"k8s.io/apiserver/pkg/admission/plugin/namespace/lifecycle"
 	noderestriction "k8s.io/kubernetes/plugin/pkg/admission/noderestriction"
 	expandpvcadmission "k8s.io/kubernetes/plugin/pkg/admission/persistentvolume/resize"
@@ -18,18 +17,33 @@ import (
 	storageclassdefaultadmission "k8s.io/kubernetes/plugin/pkg/admission/storageclass/setdefault"
 
 	oadmission "github.com/openshift/origin/pkg/cmd/server/admission"
-	configapi "github.com/openshift/origin/pkg/cmd/server/api"
-	configapilatest "github.com/openshift/origin/pkg/cmd/server/api/latest"
+	configapi "github.com/openshift/origin/pkg/cmd/server/apis/config"
+	configapilatest "github.com/openshift/origin/pkg/cmd/server/apis/config/latest"
 	imageadmission "github.com/openshift/origin/pkg/image/admission"
-	imagepolicy "github.com/openshift/origin/pkg/image/admission/imagepolicy/api"
-	imagequalify "github.com/openshift/origin/pkg/image/admission/imagequalify/api"
+	imagepolicy "github.com/openshift/origin/pkg/image/admission/apis/imagepolicy"
 	ingressadmission "github.com/openshift/origin/pkg/ingress/admission"
-	overrideapi "github.com/openshift/origin/pkg/quota/admission/clusterresourceoverride/api"
+	overrideapi "github.com/openshift/origin/pkg/quota/admission/apis/clusterresourceoverride"
 	sccadmission "github.com/openshift/origin/pkg/security/admission"
 	serviceadmit "github.com/openshift/origin/pkg/service/admission"
 )
 
 var (
+	// these are admission plugins that cannot be applied until after the kubeapiserver starts.
+	// TODO if nothing comes to mind in 3.10, kill this
+	SkipRunLevelZeroPlugins = sets.NewString()
+	// these are admission plugins that cannot be applied until after the openshiftapiserver apiserver starts.
+	SkipRunLevelOnePlugins = sets.NewString(
+		"ProjectRequestLimit",
+		"openshift.io/RestrictSubjectBindings",
+		"openshift.io/ClusterResourceQuota",
+		imagepolicy.PluginName,
+		overrideapi.PluginName,
+		"OriginPodNodeEnvironment",
+		"RunOnceDuration",
+		sccadmission.PluginName,
+		"SCCExecRestrictions",
+	)
+
 	// openshiftAdmissionControlPlugins gives the in-order default admission chain for openshift resources.
 	openshiftAdmissionControlPlugins = []string{
 		"ProjectRequestLimit",
@@ -62,7 +76,6 @@ var (
 		serviceadmit.ExternalIPPluginName,
 		serviceadmit.RestrictedEndpointsPluginName,
 		imagepolicy.PluginName,
-		imagequalify.PluginName,
 		"ImagePolicyWebhook",
 		"PodPreset",
 		"InitialResources",
@@ -121,7 +134,6 @@ var (
 		serviceadmit.ExternalIPPluginName,
 		serviceadmit.RestrictedEndpointsPluginName,
 		imagepolicy.PluginName,
-		imagequalify.PluginName,
 		"ImagePolicyWebhook",
 		"PodPreset",
 		"InitialResources",
@@ -167,6 +179,7 @@ func fixupAdmissionPlugins(plugins []string) []string {
 func NewAdmissionChains(
 	options configapi.MasterConfig,
 	admissionInitializer admission.PluginInitializer,
+	admissionDecorator admission.Decorator,
 ) (admission.Interface, error) {
 	admissionPluginConfigFilename := ""
 	if len(options.KubernetesMasterConfig.APIServerArguments["admission-control-config-file"]) > 0 {
@@ -204,7 +217,7 @@ func NewAdmissionChains(
 	}
 	admissionPluginNames = fixupAdmissionPlugins(admissionPluginNames)
 
-	admissionChain, err := newAdmissionChainFunc(admissionPluginNames, admissionPluginConfigFilename, options, admissionInitializer)
+	admissionChain, err := newAdmissionChainFunc(admissionPluginNames, admissionPluginConfigFilename, options, admissionInitializer, admissionDecorator)
 
 	if err != nil {
 		return nil, err
@@ -216,7 +229,7 @@ func NewAdmissionChains(
 // newAdmissionChainFunc is for unit testing only.  You should NEVER OVERRIDE THIS outside of a unit test.
 var newAdmissionChainFunc = newAdmissionChain
 
-func newAdmissionChain(pluginNames []string, admissionConfigFilename string, options configapi.MasterConfig, admissionInitializer admission.PluginInitializer) (admission.Interface, error) {
+func newAdmissionChain(pluginNames []string, admissionConfigFilename string, options configapi.MasterConfig, admissionInitializer admission.PluginInitializer, admissionDecorator admission.Decorator) (admission.Interface, error) {
 	plugins := []admission.Interface{}
 	for _, pluginName := range pluginNames {
 		var (
@@ -266,7 +279,7 @@ func newAdmissionChain(pluginNames []string, admissionConfigFilename string, opt
 			if err != nil {
 				return nil, err
 			}
-			plugin, err = OriginAdmissionPlugins.NewFromPlugins([]string{pluginName}, pluginsConfigProvider, admissionInitializer, admissionmetrics.WithControllerMetrics)
+			plugin, err = OriginAdmissionPlugins.NewFromPlugins([]string{pluginName}, pluginsConfigProvider, admissionInitializer, admissionDecorator)
 			if err != nil {
 				// should have been caught with validation
 				return nil, err

@@ -27,13 +27,22 @@ import (
 
 // ClusterServiceBroker represents an entity that provides
 // ClusterServiceClasses for use in the service catalog.
+// +k8s:openapi-gen=x-kubernetes-print-columns:custom-columns=NAME:.metadata.name,URL:.spec.url
 type ClusterServiceBroker struct {
 	metav1.TypeMeta `json:",inline"`
+
 	// Non-namespaced.  The name of this resource in etcd is in ObjectMeta.Name.
+	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
+	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ClusterServiceBrokerSpec   `json:"spec"`
-	Status ClusterServiceBrokerStatus `json:"status"`
+	// Spec defines the behavior of the broker.
+	// +optional
+	Spec ClusterServiceBrokerSpec `json:"spec,omitempty"`
+
+	// Status represents the current status of a broker.
+	// +optional
+	Status ClusterServiceBrokerStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -66,6 +75,7 @@ type ClusterServiceBrokerSpec struct {
 
 	// RelistBehavior specifies the type of relist behavior the catalog should
 	// exhibit when relisting ClusterServiceClasses available from a broker.
+	// +optional
 	RelistBehavior ServiceBrokerRelistBehavior `json:"relistBehavior"`
 
 	// RelistDuration is the frequency by which a controller will relist the
@@ -225,12 +235,22 @@ type ClusterServiceClassList struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // ClusterServiceClass represents an offering in the service catalog.
+// +k8s:openapi-gen=x-kubernetes-print-columns:custom-columns=NAME:.metadata.name,EXTERNAL NAME:.spec.externalName,BROKER:.spec.clusterServiceBrokerName,BINDABLE:.spec.bindable,PLAN UPDATABLE:.spec.planUpdatable
 type ClusterServiceClass struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+
+	// Non-namespaced.  The name of this resource in etcd is in ObjectMeta.Name.
+	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
+	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ClusterServiceClassSpec   `json:"spec"`
-	Status ClusterServiceClassStatus `json:"status"`
+	// Spec defines the behavior of the service class.
+	// +optional
+	Spec ClusterServiceClassSpec `json:"spec,omitempty"`
+
+	// Status represents the current status of the service class.
+	// +optional
+	Status ClusterServiceClassStatus `json:"status,omitempty"`
 }
 
 // ClusterServiceClassSpec represents details about the ClusterServicePlan
@@ -264,7 +284,7 @@ type ClusterServiceClassSpec struct {
 	//
 	// BindingRetrievable indicates whether fetching a binding via a GET on
 	// its endpoint is supported for all plans.
-	BindingRetrievable bool `json:"binding_retrievable"`
+	BindingRetrievable bool `json:"bindingRetrievable"`
 
 	// PlanUpdatable indicates whether instances provisioned from this
 	// ClusterServiceClass may change ClusterServicePlans after being
@@ -320,12 +340,22 @@ type ClusterServicePlanList struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // ClusterServicePlan represents a tier of a ServiceClass.
+// +k8s:openapi-gen=x-kubernetes-print-columns:custom-columns=NAME:.metadata.name,EXTERNAL NAME:.spec.externalName,BROKER:.spec.clusterServiceBrokerName,CLASS:.spec.clusterServiceClassRef.name
 type ClusterServicePlan struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+
+	// Non-namespaced.  The name of this resource in etcd is in ObjectMeta.Name.
+	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
+	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ClusterServicePlanSpec   `json:"spec"`
-	Status ClusterServicePlanStatus `json:"status"`
+	// Spec defines the behavior of the service plan.
+	// +optional
+	Spec ClusterServicePlanSpec `json:"spec,omitempty"`
+
+	// Status represents the current status of the service plan.
+	// +optional
+	Status ClusterServicePlanStatus `json:"status,omitempty"`
 }
 
 // ClusterServicePlanSpec represents details about a ClusterServicePlan.
@@ -427,12 +457,22 @@ type ExtraValue []string
 // In the future, this will be allowed and will represent the intention that
 // the ServiceInstance should have the plan and/or parameters updated at the
 // ClusterServiceBroker.
+// +k8s:openapi-gen=x-kubernetes-print-columns:custom-columns=NAME:.metadata.name,CLASS:.spec.clusterServiceClassExternalName,PLAN:.spec.clusterServicePlanExternalName
 type ServiceInstance struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+
+	// The name of this resource in etcd is in ObjectMeta.Name.
+	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
+	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ServiceInstanceSpec   `json:"spec"`
-	Status ServiceInstanceStatus `json:"status"`
+	// Spec defines the behavior of the service instance.
+	// +optional
+	Spec ServiceInstanceSpec `json:"spec,omitempty"`
+
+	// Status represents the current status of a service instance.
+	// +optional
+	Status ServiceInstanceStatus `json:"status,omitempty"`
 }
 
 // PlanReference defines the user specification for the desired
@@ -511,6 +551,7 @@ type ServiceInstanceSpec struct {
 	// ExternalID is the identity of this object for use with the OSB SB API.
 	//
 	// Immutable.
+	// +optional
 	ExternalID string `json:"externalID"`
 
 	// Currently, this field is ALPHA: it may change or disappear at any time
@@ -691,12 +732,22 @@ type ServiceBindingList struct {
 
 // ServiceBinding represents a "used by" relationship between an application and an
 // ServiceInstance.
+// +k8s:openapi-gen=x-kubernetes-print-columns:custom-columns=NAME:.metadata.name,INSTANCE:.spec.instanceRef.name,SECRET:.spec.secretName
 type ServiceBinding struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+
+	// The name of this resource in etcd is in ObjectMeta.Name.
+	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
+	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ServiceBindingSpec   `json:"spec"`
-	Status ServiceBindingStatus `json:"status"`
+	// Spec represents the desired state of a ServiceBinding.
+	// +optional
+	Spec ServiceBindingSpec `json:"spec,omitempty"`
+
+	// Status represents the current status of a ServiceBinding.
+	// +optional
+	Status ServiceBindingStatus `json:"status,omitempty"`
 }
 
 // ServiceBindingSpec represents the desired state of a
@@ -738,6 +789,7 @@ type ServiceBindingSpec struct {
 	// ExternalID is the identity of this object for use with the OSB API.
 	//
 	// Immutable.
+	// +optional
 	ExternalID string `json:"externalID"`
 
 	// Currently, this field is ALPHA: it may change or disappear at any time

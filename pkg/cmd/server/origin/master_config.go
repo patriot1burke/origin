@@ -4,11 +4,13 @@ import (
 	"fmt"
 
 	"github.com/golang/glog"
+	"github.com/openshift/origin/pkg/admission/namespaceconditions"
 
 	kapierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	admissionmetrics "k8s.io/apiserver/pkg/admission/metrics"
 	"k8s.io/apiserver/pkg/audit"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	kinformers "k8s.io/client-go/informers"
@@ -27,7 +29,7 @@ import (
 
 	userinformer "github.com/openshift/client-go/user/informers/externalversions"
 	authorizationinformer "github.com/openshift/origin/pkg/authorization/generated/informers/internalversion"
-	configapi "github.com/openshift/origin/pkg/cmd/server/api"
+	configapi "github.com/openshift/origin/pkg/cmd/server/apis/config"
 	kubernetes "github.com/openshift/origin/pkg/cmd/server/kubernetes/master"
 	originadmission "github.com/openshift/origin/pkg/cmd/server/origin/admission"
 	originrest "github.com/openshift/origin/pkg/cmd/server/origin/rest"
@@ -150,7 +152,16 @@ func BuildMasterConfig(
 	if err != nil {
 		return nil, err
 	}
-	admission, err := originadmission.NewAdmissionChains(options, admissionInitializer)
+	admissionDecorator := namespaceconditions.NamespaceLabelConditions{
+		Delegate: admissionmetrics.WithControllerMetrics,
+
+		NamespaceClient: privilegedLoopbackKubeClientsetExternal.CoreV1(),
+		NamespaceLister: informers.GetExternalKubeInformers().Core().V1().Namespaces().Lister(),
+
+		SkipLevelZeroNames: originadmission.SkipRunLevelZeroPlugins,
+		SkipLevelOneNames:  originadmission.SkipRunLevelOnePlugins,
+	}
+	admission, err := originadmission.NewAdmissionChains(options, admissionInitializer, admissionDecorator.WithNamespaceLabelConditions)
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +171,6 @@ func BuildMasterConfig(
 		admission,
 		authenticator,
 		authorizer,
-		informers.GetClientGoKubeInformers(),
 	)
 	if err != nil {
 		return nil, err

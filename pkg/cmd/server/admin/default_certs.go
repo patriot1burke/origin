@@ -7,7 +7,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	configapi "github.com/openshift/origin/pkg/cmd/server/api"
+	configapi "github.com/openshift/origin/pkg/cmd/server/apis/config"
 	"github.com/openshift/origin/pkg/cmd/server/bootstrappolicy"
 )
 
@@ -50,6 +50,10 @@ func DefaultKubeletClientCerts(certDir string) []ClientCertInfo {
 	return []ClientCertInfo{
 		DefaultMasterKubeletClientCertInfo(certDir),
 	}
+}
+
+func DefaultFrontProxySignerName() string {
+	return fmt.Sprintf("%s@%d", "aggregator-proxy-ca", time.Now().Unix())
 }
 
 func DefaultMasterKubeletClientCertInfo(certDir string) ClientCertInfo {

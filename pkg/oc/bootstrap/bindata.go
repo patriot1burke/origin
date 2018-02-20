@@ -38,13 +38,12 @@
 // examples/service-catalog/service-catalog.yaml
 // install/origin-web-console/console-config.yaml
 // install/origin-web-console/console-template.yaml
-// install/origin-web-console/rbac-template.yaml
 // install/service-catalog-broker-resources/template-service-broker-registration.yaml
 // install/templateservicebroker/apiserver-config.yaml
 // install/templateservicebroker/apiserver-template.yaml
 // install/templateservicebroker/previous/apiserver-template.yaml
 // install/templateservicebroker/rbac-template.yaml
-// pkg/image/admission/imagepolicy/api/v1/default-policy.yaml
+// pkg/image/admission/apis/imagepolicy/v1/default-policy.yaml
 // DO NOT EDIT!
 
 package bootstrap
@@ -1211,6 +1210,98 @@ var _examplesImageStreamsImageStreamsCentos7Json = []byte(`{
             "from": {
               "kind": "DockerImage",
               "name": "docker.io/openshift/jenkins-2-centos7:v3.9"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "kind": "ImageStream",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "dotnet",
+        "annotations": {
+          "openshift.io/display-name": ".NET Core Builder Images"
+        }
+      },
+      "spec": {
+        "tags": [
+          {
+            "name": "latest",
+            "annotations": {
+              "openshift.io/display-name": ".NET Core (Latest)",
+              "description": "Build and run .NET Core applications on CentOS 7. For more information about using this builder image, including OpenShift considerations, see https://github.com/redhat-developer/s2i-dotnetcore/tree/master/2.0/build/README.md.\n\nWARNING: By selecting this tag, your application will automatically update to use the latest version of .NET Core available on OpenShift, including major versions updates.",
+              "iconClass": "icon-dotnet",
+              "tags": "builder,.net,dotnet,dotnetcore",
+              "supports":"dotnet",
+              "sampleRepo": "https://github.com/redhat-developer/s2i-dotnetcore-ex.git",
+              "sampleContextDir": "app",
+              "sampleRef": "dotnetcore-2.0"
+            },
+            "from": {
+              "kind": "ImageStreamTag",
+              "name": "2.0"
+            }
+          },
+          {
+            "name": "2.0",
+            "annotations": {
+              "openshift.io/display-name": ".NET Core 2.0",
+              "description": "Build and run .NET Core 2.0 applications on CentOS 7. For more information about using this builder image, including OpenShift considerations, see https://github.com/redhat-developer/s2i-dotnetcore/tree/master/2.0/build/README.md.",
+              "iconClass": "icon-dotnet",
+              "tags": "builder,.net,dotnet,dotnetcore,rh-dotnet20",
+              "supports":"dotnet:2.0,dotnet",
+              "sampleRepo": "https://github.com/redhat-developer/s2i-dotnetcore-ex.git",
+              "sampleContextDir": "app",
+              "sampleRef": "dotnetcore-2.0",
+              "version": "2.0"
+            },
+            "from": {
+              "kind": "DockerImage",
+              "name": "registry.centos.org/dotnet/dotnet-20-centos7:latest"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "kind": "ImageStream",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "dotnet-runtime",
+        "annotations": {
+          "openshift.io/display-name": ".NET Core Runtime Images"
+        }
+      },
+      "spec": {
+        "tags": [
+          {
+            "name": "latest",
+            "annotations": {
+              "openshift.io/display-name": ".NET Core Runtime (Latest)",
+              "description": "Run .NET Core applications on CentOS 7. For more information about using this image, including OpenShift considerations, see https://github.com/redhat-developer/s2i-dotnetcore/tree/master/2.0/runtime/README.md.\n\nWARNING: By selecting this tag, your application will automatically update to use the latest version of .NET Core Runtime available on OpenShift, including major versions updates.",
+              "iconClass": "icon-dotnet",
+              "tags": "runtime,.net-runtime,dotnet-runtime,dotnetcore-runtime",
+              "supports":"dotnet-runtime"
+            },
+            "from": {
+              "kind": "ImageStreamTag",
+              "name": "2.0"
+            }
+          },
+          {
+            "name": "2.0",
+            "annotations": {
+              "openshift.io/display-name": ".NET Core 2.0 Runtime",
+              "description": "Run .NET Core applications on CentOS 7. For more information about using this image, including OpenShift considerations, see https://github.com/redhat-developer/s2i-dotnetcore/tree/master/2.0/runtime/README.md.",
+              "iconClass": "icon-dotnet",
+              "tags": "runtime,.net-runtime,dotnet-runtime,dotnetcore-runtime",
+              "supports":"dotnet-runtime",
+              "version": "2.0"
+            },
+            "from": {
+              "kind": "DockerImage",
+              "name": "registry.centos.org/dotnet/dotnet-20-runtime-centos7:latest"
             }
           }
         ]
@@ -6622,71 +6713,108 @@ spec:
         // and "openshift" directive/closure from the OpenShift Client Plugin for Jenkins.  Otherwise, the declarative pipeline engine
         // will not be fully engaged.
         pipeline {
-          openshift.withCluster() {
-            openshift.withProject() {
-              echo "Using project: ${openshift.project()}"
-                agent {
-                  node {
-                    // spin up a node.js slave pod to run this build on
-                    label 'nodejs'
-                  }
-                }
-                options {
-                  // set a timeout of 20 minutes for this pipeline
-                  timeout(time: 20, unit: 'MINUTES')
-                }
-                stages {
-                  stage('cleanup') {
-                    steps {
-                      // delete everything with this template label
-                      openshift.selector("all", [ template : templateName ]).delete()
-                      // delete any secrets with this template label
-                      if (openshift.selector("secrets", templateName).exists()) {
-                        openshift.selector("secrets", templateName).delete()
-                      }
-                    }
-                  }
-                  stage('create') {
-                    steps {
-                      // create a new application from the templatePath
-                      openshift.newApp(templatePath)
-                    }
-                  }
-                  stage('build') {
-                    steps {
-                      def builds = openshift.selector("bc", templateName).related('builds')
-                      // wait up to 5 minutes for the build to complete
-                      timeout(5) {
-                        builds.untilEach(1) {
-                          return (it.object().status.phase == "Complete")
-                        }
-                      }
-                    }
-                  }
-                  stage('deploy') {
-                    steps {
-                      def rm = openshift.selector("dc", templateName).rollout()
-                      // wait up to 5 minutes for the deployment to complete
-                      timeout(5) {
-                        openshift.selector("dc", templateName).related('pods').untilEach(1) {
-                          return (it.object().status.phase == "Running")
-                        }
-                      }
-                    }
-                  }
-                  stage('tag') {
-                    steps {
-                      // if everything else succeeded, tag the ${templateName}:latest image as ${templateName}-staging:latest
-                      // a pipeline build config for the staging environment can watch for the ${templateName}-staging:latest
-                      // image to change and then deploy it to the staging environment
-                      openshift.tag("${templateName}:latest", "${templateName}-staging:latest")
-                    }
-                  }
-                }
+            agent {
+              node {
+                // spin up a node.js slave pod to run this build on
+                label 'nodejs'
+              }
             }
-          }
-        }
-    type: JenkinsPipeline
+            options {
+                // set a timeout of 20 minutes for this pipeline
+                timeout(time: 20, unit: 'MINUTES')
+            }
+
+            stages {
+                stage('preamble') {
+                    steps {
+                        script {
+                            openshift.withCluster() {
+                                openshift.withProject() {
+                                    echo "Using project: ${openshift.project()}"
+                                }
+                            }
+                        }
+                    }
+                }
+                stage('cleanup') {
+                    steps {
+                        script {
+                            openshift.withCluster() {
+                                openshift.withProject() {
+                                    // delete everything with this template label
+                                    openshift.selector("all", [ template : templateName ]).delete()
+                                    // delete any secrets with this template label
+                                    if (openshift.selector("secrets", templateName).exists()) {
+                                        openshift.selector("secrets", templateName).delete()
+                                    }
+                                }
+                            }
+                        } // script
+                    } // steps
+                } // stage
+                stage('create') {
+                    steps {
+                        script {
+                            openshift.withCluster() {
+                                openshift.withProject() {
+                                    // create a new application from the templatePath
+                                    openshift.newApp(templatePath)
+                                }
+                            }
+                        } // script
+                    } // steps
+                } // stage
+                stage('build') {
+                    steps {
+                        script {
+                            openshift.withCluster() {
+                                openshift.withProject() {
+                                    def builds = openshift.selector("bc", templateName).related('builds')
+                                    // wait up to 5 minutes for the build to complete
+                                    timeout(5) {
+                                        builds.untilEach(1) {
+                                            return (it.object().status.phase == "Complete")
+                                        }
+                                    }
+                                }
+                            }
+                        } // script
+                    } // steps
+                } // stage
+                stage('deploy') {
+                    steps {
+                        script {
+                            openshift.withCluster() {
+                                openshift.withProject() {
+                                    def rm = openshift.selector("dc", templateName).rollout()
+                                    // wait up to 5 minutes for the deployment to complete
+                                    timeout(5) {
+                                        openshift.selector("dc", templateName).related('pods').untilEach(1) {
+                                            return (it.object().status.phase == "Running")
+                                        }
+                                    }
+                                }
+                            }
+                        } // script
+                    } // steps
+                } // stage
+                stage('tag') {
+                    steps {
+                        script {
+                            openshift.withCluster() {
+                                openshift.withProject() {
+                                    // if everything else succeeded, tag the ${templateName}:latest image as ${templateName}-staging:latest
+                                    // a pipeline build config for the staging environment can watch for the ${templateName}-staging:latest
+                                    // image to change and then deploy it to the staging environment
+                                    openshift.tag("${templateName}:latest", "${templateName}-staging:latest")
+                                }
+                            }
+                        } // script
+                    } // steps
+                } // stage
+            } // stages
+        } // pipeline
+      type: JenkinsPipeline
 `)
 
 func examplesJenkinsPipelineNodejsSamplePipelineYamlBytes() ([]byte, error) {
@@ -13708,7 +13836,7 @@ metadata:
     "openshift.io/display-name": Heapster Metrics (Standalone)
     description: |
       A simple metrics solution for an OpenShift cluster. Expects to be installed in the 'kube-system' namespace.
-    iconClass: icon-cogs
+    iconClass: fa fa-cogs
     tags: "metrics,monitoring,heapster"
   labels:
     metrics-infra: heapster
@@ -13839,7 +13967,7 @@ metadata:
     "openshift.io/display-name": Prometheus
     description: |
       A monitoring solution for an OpenShift cluster - collect and gather metrics and alerts from nodes, services, and the infrastructure. This is a tech preview feature.
-    iconClass: icon-cogs
+    iconClass: fa fa-cogs
     tags: "monitoring,prometheus, alertmanager,time-series"
 parameters:
 - description: The namespace to instantiate prometheus under. Defaults to 'kube-system'.
@@ -15032,6 +15160,7 @@ objects:
       metadata:
         name: webconsole
         labels:
+          app: openshift-web-console
           webconsole: "true"
       spec:
         serviceAccountName: webconsole
@@ -15057,10 +15186,17 @@ objects:
               port: 8443
               scheme: HTTPS
           livenessProbe:
-            httpGet:
-              path: /
-              port: 8443
-              scheme: HTTPS
+            exec:
+              command:
+                - /bin/sh
+                - -i
+                - -c
+                - |-
+                  if [[ ! -f /tmp/webconsole-config.hash ]]; then \
+                    md5sum /var/webconsole-config/webconsole-config.yaml > /tmp/webconsole-config.hash; \
+                  elif [[ $(md5sum /var/webconsole-config/webconsole-config.yaml) != $(cat /tmp/webconsole-config.hash) ]]; then \
+                    exit 1; \
+                  fi && curl -k -f https://0.0.0.0:8443/console/
           resources:
             requests:
               cpu: 100m
@@ -15128,61 +15264,6 @@ func installOriginWebConsoleConsoleTemplateYaml() (*asset, error) {
 	}
 
 	info := bindataFileInfo{name: "install/origin-web-console/console-template.yaml", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
-	a := &asset{bytes: bytes, info: info}
-	return a, nil
-}
-
-var _installOriginWebConsoleRbacTemplateYaml = []byte(`apiVersion: template.openshift.io/v1
-kind: Template
-metadata:
-  name: web-console-server-rbac
-parameters:
-- name: NAMESPACE
-  # This namespace cannot be changed. Only `+"`"+`openshift-web-console`+"`"+` is supported.
-  value: openshift-web-console
-objects:
-
-
-# allow grant powers to the webconsole server for cluster inspection
-- apiVersion: rbac.authorization.k8s.io/v1beta1
-  kind: ClusterRole
-  metadata:
-    name: system:openshift:web-console-server
-  rules:
-  - apiGroups:
-    - "servicecatalog.k8s.io"
-    resources:
-    - clusterservicebrokers
-    verbs:
-    - get
-    - list
-    - watch
-
-# Grant the service account for the web console
-- apiVersion: rbac.authorization.k8s.io/v1beta1
-  kind: ClusterRoleBinding
-  metadata:
-    name: system:openshift:web-console-server
-  roleRef:
-    kind: ClusterRole
-    name: system:openshift:web-console-server
-  subjects:
-  - kind: ServiceAccount
-    namespace: ${NAMESPACE}
-    name: webconsole
-`)
-
-func installOriginWebConsoleRbacTemplateYamlBytes() ([]byte, error) {
-	return _installOriginWebConsoleRbacTemplateYaml, nil
-}
-
-func installOriginWebConsoleRbacTemplateYaml() (*asset, error) {
-	bytes, err := installOriginWebConsoleRbacTemplateYamlBytes()
-	if err != nil {
-		return nil, err
-	}
-
-	info := bindataFileInfo{name: "install/origin-web-console/rbac-template.yaml", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -15645,7 +15726,7 @@ func installTemplateservicebrokerRbacTemplateYaml() (*asset, error) {
 	return a, nil
 }
 
-var _pkgImageAdmissionImagepolicyApiV1DefaultPolicyYaml = []byte(`kind: ImagePolicyConfig
+var _pkgImageAdmissionApisImagepolicyV1DefaultPolicyYaml = []byte(`kind: ImagePolicyConfig
 apiVersion: v1
 # To require that all images running on the platform be imported first, you may uncomment the
 # following rule. Any image that refers to a registry outside of OpenShift will be rejected unless it
@@ -15666,17 +15747,17 @@ executionRules:
   skipOnResolutionFailure: true
 `)
 
-func pkgImageAdmissionImagepolicyApiV1DefaultPolicyYamlBytes() ([]byte, error) {
-	return _pkgImageAdmissionImagepolicyApiV1DefaultPolicyYaml, nil
+func pkgImageAdmissionApisImagepolicyV1DefaultPolicyYamlBytes() ([]byte, error) {
+	return _pkgImageAdmissionApisImagepolicyV1DefaultPolicyYaml, nil
 }
 
-func pkgImageAdmissionImagepolicyApiV1DefaultPolicyYaml() (*asset, error) {
-	bytes, err := pkgImageAdmissionImagepolicyApiV1DefaultPolicyYamlBytes()
+func pkgImageAdmissionApisImagepolicyV1DefaultPolicyYaml() (*asset, error) {
+	bytes, err := pkgImageAdmissionApisImagepolicyV1DefaultPolicyYamlBytes()
 	if err != nil {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "pkg/image/admission/imagepolicy/api/v1/default-policy.yaml", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
+	info := bindataFileInfo{name: "pkg/image/admission/apis/imagepolicy/v1/default-policy.yaml", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -15771,13 +15852,12 @@ var _bindata = map[string]func() (*asset, error){
 	"examples/service-catalog/service-catalog.yaml": examplesServiceCatalogServiceCatalogYaml,
 	"install/origin-web-console/console-config.yaml": installOriginWebConsoleConsoleConfigYaml,
 	"install/origin-web-console/console-template.yaml": installOriginWebConsoleConsoleTemplateYaml,
-	"install/origin-web-console/rbac-template.yaml": installOriginWebConsoleRbacTemplateYaml,
 	"install/service-catalog-broker-resources/template-service-broker-registration.yaml": installServiceCatalogBrokerResourcesTemplateServiceBrokerRegistrationYaml,
 	"install/templateservicebroker/apiserver-config.yaml": installTemplateservicebrokerApiserverConfigYaml,
 	"install/templateservicebroker/apiserver-template.yaml": installTemplateservicebrokerApiserverTemplateYaml,
 	"install/templateservicebroker/previous/apiserver-template.yaml": installTemplateservicebrokerPreviousApiserverTemplateYaml,
 	"install/templateservicebroker/rbac-template.yaml": installTemplateservicebrokerRbacTemplateYaml,
-	"pkg/image/admission/imagepolicy/api/v1/default-policy.yaml": pkgImageAdmissionImagepolicyApiV1DefaultPolicyYaml,
+	"pkg/image/admission/apis/imagepolicy/v1/default-policy.yaml": pkgImageAdmissionApisImagepolicyV1DefaultPolicyYaml,
 }
 
 // AssetDir returns the file names below a certain
@@ -15880,7 +15960,6 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"origin-web-console": &bintree{nil, map[string]*bintree{
 			"console-config.yaml": &bintree{installOriginWebConsoleConsoleConfigYaml, map[string]*bintree{}},
 			"console-template.yaml": &bintree{installOriginWebConsoleConsoleTemplateYaml, map[string]*bintree{}},
-			"rbac-template.yaml": &bintree{installOriginWebConsoleRbacTemplateYaml, map[string]*bintree{}},
 		}},
 		"service-catalog-broker-resources": &bintree{nil, map[string]*bintree{
 			"template-service-broker-registration.yaml": &bintree{installServiceCatalogBrokerResourcesTemplateServiceBrokerRegistrationYaml, map[string]*bintree{}},
@@ -15897,10 +15976,10 @@ var _bintree = &bintree{nil, map[string]*bintree{
 	"pkg": &bintree{nil, map[string]*bintree{
 		"image": &bintree{nil, map[string]*bintree{
 			"admission": &bintree{nil, map[string]*bintree{
-				"imagepolicy": &bintree{nil, map[string]*bintree{
-					"api": &bintree{nil, map[string]*bintree{
+				"apis": &bintree{nil, map[string]*bintree{
+					"imagepolicy": &bintree{nil, map[string]*bintree{
 						"v1": &bintree{nil, map[string]*bintree{
-							"default-policy.yaml": &bintree{pkgImageAdmissionImagepolicyApiV1DefaultPolicyYaml, map[string]*bintree{}},
+							"default-policy.yaml": &bintree{pkgImageAdmissionApisImagepolicyV1DefaultPolicyYaml, map[string]*bintree{}},
 						}},
 					}},
 				}},

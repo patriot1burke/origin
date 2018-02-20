@@ -130,11 +130,15 @@
 // test/extended/testdata/hello-builder/scripts/run
 // test/extended/testdata/idling-echo-server-rc.yaml
 // test/extended/testdata/idling-echo-server.yaml
+// test/extended/testdata/image/deployment-with-annotation-trigger.yaml
 // test/extended/testdata/image-pull-secrets/dc-with-new-pull-secret.yaml
 // test/extended/testdata/image-pull-secrets/dc-with-old-pull-secret.yaml
 // test/extended/testdata/image-pull-secrets/pod-with-new-pull-secret.yaml
 // test/extended/testdata/image-pull-secrets/pod-with-no-pull-secret.yaml
 // test/extended/testdata/image-pull-secrets/pod-with-old-pull-secret.yaml
+// test/extended/testdata/image_ecosystem/perl-hotdeploy/index.pl
+// test/extended/testdata/image_ecosystem/perl-hotdeploy/lib/My/Test.pm
+// test/extended/testdata/image_ecosystem/perl-hotdeploy/perl.json
 // test/extended/testdata/imagestream-jenkins-slave-pods.yaml
 // test/extended/testdata/imagestreamtag-jenkins-slave-pods.yaml
 // test/extended/testdata/jenkins-plugin/build-job-clone.xml
@@ -246,7 +250,6 @@
 // examples/quickstarts/cakephp-mysql.json
 // install/origin-web-console/console-config.yaml
 // install/origin-web-console/console-template.yaml
-// install/origin-web-console/rbac-template.yaml
 // install/service-catalog-broker-resources/template-service-broker-registration.yaml
 // install/templateservicebroker/apiserver-config.yaml
 // install/templateservicebroker/apiserver-template.yaml
@@ -6834,6 +6837,49 @@ func testExtendedTestdataIdlingEchoServerYaml() (*asset, error) {
 	return a, nil
 }
 
+var _testExtendedTestdataImageDeploymentWithAnnotationTriggerYaml = []byte(`apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    image.openshift.io/triggers: '[{"from":{"kind":"ImageStreamTag","name":"test:v1"},"fieldPath":"spec.template.spec.containers[?(@.name==\"test\")].image"}]'
+  name: test
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: test
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: test
+    spec:
+      containers:
+        - image: " "
+          name: test
+          command: ["/bin/sleep"]
+          args:
+           - infinity
+`)
+
+func testExtendedTestdataImageDeploymentWithAnnotationTriggerYamlBytes() ([]byte, error) {
+	return _testExtendedTestdataImageDeploymentWithAnnotationTriggerYaml, nil
+}
+
+func testExtendedTestdataImageDeploymentWithAnnotationTriggerYaml() (*asset, error) {
+	bytes, err := testExtendedTestdataImageDeploymentWithAnnotationTriggerYamlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "test/extended/testdata/image/deployment-with-annotation-trigger.yaml", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
 var _testExtendedTestdataImagePullSecretsDcWithNewPullSecretYaml = []byte(`kind: Template
 apiVersion: v1
 metadata:
@@ -7033,6 +7079,219 @@ func testExtendedTestdataImagePullSecretsPodWithOldPullSecretYaml() (*asset, err
 	}
 
 	info := bindataFileInfo{name: "test/extended/testdata/image-pull-secrets/pod-with-old-pull-secret.yaml", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var _testExtendedTestdataImage_ecosystemPerlHotdeployIndexPl = []byte(`#!/usr/bin/perl
+use strict;
+use warnings;
+
+use File::Basename qw(dirname);
+use Cwd  qw(abs_path);
+
+use lib (dirname abs_path $0) .'/lib';
+use My::Test qw(test);
+   
+print qq(Content-type: text/plain\n\n);
+     
+test();
+
+`)
+
+func testExtendedTestdataImage_ecosystemPerlHotdeployIndexPlBytes() ([]byte, error) {
+	return _testExtendedTestdataImage_ecosystemPerlHotdeployIndexPl, nil
+}
+
+func testExtendedTestdataImage_ecosystemPerlHotdeployIndexPl() (*asset, error) {
+	bytes, err := testExtendedTestdataImage_ecosystemPerlHotdeployIndexPlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "test/extended/testdata/image_ecosystem/perl-hotdeploy/index.pl", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var _testExtendedTestdataImage_ecosystemPerlHotdeployLibMyTestPm = []byte(`package My::Test;
+use strict; 
+use warnings;
+
+use Exporter qw(import);
+ 
+our @EXPORT_OK = qw(test);
+
+sub test {
+  print "initial value\n";
+}
+
+1;
+`)
+
+func testExtendedTestdataImage_ecosystemPerlHotdeployLibMyTestPmBytes() ([]byte, error) {
+	return _testExtendedTestdataImage_ecosystemPerlHotdeployLibMyTestPm, nil
+}
+
+func testExtendedTestdataImage_ecosystemPerlHotdeployLibMyTestPm() (*asset, error) {
+	bytes, err := testExtendedTestdataImage_ecosystemPerlHotdeployLibMyTestPmBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "test/extended/testdata/image_ecosystem/perl-hotdeploy/lib/My/Test.pm", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var _testExtendedTestdataImage_ecosystemPerlHotdeployPerlJson = []byte(`{
+  "kind": "Template",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "perl-hotdeploy-example"
+  },
+  "objects": [
+    {
+      "kind": "Service",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${NAME}"
+      },
+      "spec": {
+        "ports": [
+          {
+            "name": "web",
+            "port": 8080,
+            "targetPort": 8080
+          }
+        ],
+        "selector": {
+          "name": "${NAME}"
+        }
+      }
+    },
+    {
+      "kind": "ImageStream",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${NAME}",
+        "annotations": {
+          "description": "Keeps track of changes in the application image"
+        }
+      }
+    },
+    {
+      "kind": "BuildConfig",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${NAME}"
+      },
+      "spec": {
+        "strategy": {
+          "type": "Source",
+          "sourceStrategy": {
+            "from": {
+              "kind": "ImageStreamTag",
+              "namespace": "openshift",
+              "name": "perl:5.24"
+            }
+          }
+        },
+        "output": {
+          "to": {
+            "kind": "ImageStreamTag",
+            "name": "${NAME}:latest"
+          }
+        } 
+      }
+    },
+    {
+      "kind": "DeploymentConfig",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${NAME}"
+      },
+      "spec": {
+        "strategy": {
+          "type": "Rolling"
+        },
+        "triggers": [
+          {
+            "type": "ImageChange",
+            "imageChangeParams": {
+              "automatic": true,
+              "containerNames": [
+                "perl"
+              ],
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "${NAME}:latest"
+              }
+            }
+          },
+          {
+            "type": "ConfigChange"
+          }
+        ],
+        "replicas": 1,
+        "selector": {
+          "name": "${NAME}"
+        },
+        "template": {
+          "metadata": {
+            "name": "${NAME}",
+            "labels": {
+              "name": "${NAME}"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "perl",
+                "image": " ",
+                "ports": [
+                  {
+                    "containerPort": 8080
+                  }
+                ],
+                "readinessProbe": {
+                  "timeoutSeconds": 3,
+                  "initialDelaySeconds": 3,
+                  "httpGet": {
+                    "path": "/",
+                    "port": 8080
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "parameters": [
+    {
+      "name": "NAME",
+      "displayName": "Name",
+      "description": "The name assigned to all of the frontend objects defined in this template.",
+      "required": true,
+      "value": "perl"
+    }
+  ]
+}
+`)
+
+func testExtendedTestdataImage_ecosystemPerlHotdeployPerlJsonBytes() ([]byte, error) {
+	return _testExtendedTestdataImage_ecosystemPerlHotdeployPerlJson, nil
+}
+
+func testExtendedTestdataImage_ecosystemPerlHotdeployPerlJson() (*asset, error) {
+	bytes, err := testExtendedTestdataImage_ecosystemPerlHotdeployPerlJsonBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "test/extended/testdata/image_ecosystem/perl-hotdeploy/perl.json", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -9204,7 +9463,7 @@ items:
       test: router
       select: weighted
   spec:
-    host: weighted.example.com
+    host: weighted.metrics.example.com
     to:
       name: weightedendpoints1
       kind: Service
@@ -9225,7 +9484,7 @@ items:
       test: router
       select: weighted
   spec:
-    host: zeroweight.example.com
+    host: zeroweight.metrics.example.com
     to:
       name: weightedendpoints1
       kind: Service
@@ -15650,6 +15909,98 @@ var _examplesImageStreamsImageStreamsCentos7Json = []byte(`{
             "from": {
               "kind": "DockerImage",
               "name": "docker.io/openshift/jenkins-2-centos7:v3.9"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "kind": "ImageStream",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "dotnet",
+        "annotations": {
+          "openshift.io/display-name": ".NET Core Builder Images"
+        }
+      },
+      "spec": {
+        "tags": [
+          {
+            "name": "latest",
+            "annotations": {
+              "openshift.io/display-name": ".NET Core (Latest)",
+              "description": "Build and run .NET Core applications on CentOS 7. For more information about using this builder image, including OpenShift considerations, see https://github.com/redhat-developer/s2i-dotnetcore/tree/master/2.0/build/README.md.\n\nWARNING: By selecting this tag, your application will automatically update to use the latest version of .NET Core available on OpenShift, including major versions updates.",
+              "iconClass": "icon-dotnet",
+              "tags": "builder,.net,dotnet,dotnetcore",
+              "supports":"dotnet",
+              "sampleRepo": "https://github.com/redhat-developer/s2i-dotnetcore-ex.git",
+              "sampleContextDir": "app",
+              "sampleRef": "dotnetcore-2.0"
+            },
+            "from": {
+              "kind": "ImageStreamTag",
+              "name": "2.0"
+            }
+          },
+          {
+            "name": "2.0",
+            "annotations": {
+              "openshift.io/display-name": ".NET Core 2.0",
+              "description": "Build and run .NET Core 2.0 applications on CentOS 7. For more information about using this builder image, including OpenShift considerations, see https://github.com/redhat-developer/s2i-dotnetcore/tree/master/2.0/build/README.md.",
+              "iconClass": "icon-dotnet",
+              "tags": "builder,.net,dotnet,dotnetcore,rh-dotnet20",
+              "supports":"dotnet:2.0,dotnet",
+              "sampleRepo": "https://github.com/redhat-developer/s2i-dotnetcore-ex.git",
+              "sampleContextDir": "app",
+              "sampleRef": "dotnetcore-2.0",
+              "version": "2.0"
+            },
+            "from": {
+              "kind": "DockerImage",
+              "name": "registry.centos.org/dotnet/dotnet-20-centos7:latest"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "kind": "ImageStream",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "dotnet-runtime",
+        "annotations": {
+          "openshift.io/display-name": ".NET Core Runtime Images"
+        }
+      },
+      "spec": {
+        "tags": [
+          {
+            "name": "latest",
+            "annotations": {
+              "openshift.io/display-name": ".NET Core Runtime (Latest)",
+              "description": "Run .NET Core applications on CentOS 7. For more information about using this image, including OpenShift considerations, see https://github.com/redhat-developer/s2i-dotnetcore/tree/master/2.0/runtime/README.md.\n\nWARNING: By selecting this tag, your application will automatically update to use the latest version of .NET Core Runtime available on OpenShift, including major versions updates.",
+              "iconClass": "icon-dotnet",
+              "tags": "runtime,.net-runtime,dotnet-runtime,dotnetcore-runtime",
+              "supports":"dotnet-runtime"
+            },
+            "from": {
+              "kind": "ImageStreamTag",
+              "name": "2.0"
+            }
+          },
+          {
+            "name": "2.0",
+            "annotations": {
+              "openshift.io/display-name": ".NET Core 2.0 Runtime",
+              "description": "Run .NET Core applications on CentOS 7. For more information about using this image, including OpenShift considerations, see https://github.com/redhat-developer/s2i-dotnetcore/tree/master/2.0/runtime/README.md.",
+              "iconClass": "icon-dotnet",
+              "tags": "runtime,.net-runtime,dotnet-runtime,dotnetcore-runtime",
+              "supports":"dotnet-runtime",
+              "version": "2.0"
+            },
+            "from": {
+              "kind": "DockerImage",
+              "name": "registry.centos.org/dotnet/dotnet-20-runtime-centos7:latest"
             }
           }
         ]
@@ -25164,7 +25515,7 @@ metadata:
     "openshift.io/display-name": Prometheus
     description: |
       A monitoring solution for an OpenShift cluster - collect and gather metrics and alerts from nodes, services, and the infrastructure. This is a tech preview feature.
-    iconClass: icon-cogs
+    iconClass: fa fa-cogs
     tags: "monitoring,prometheus, alertmanager,time-series"
 parameters:
 - description: The namespace to instantiate prometheus under. Defaults to 'kube-system'.
@@ -27834,71 +28185,108 @@ spec:
         // and "openshift" directive/closure from the OpenShift Client Plugin for Jenkins.  Otherwise, the declarative pipeline engine
         // will not be fully engaged.
         pipeline {
-          openshift.withCluster() {
-            openshift.withProject() {
-              echo "Using project: ${openshift.project()}"
-                agent {
-                  node {
-                    // spin up a node.js slave pod to run this build on
-                    label 'nodejs'
-                  }
-                }
-                options {
-                  // set a timeout of 20 minutes for this pipeline
-                  timeout(time: 20, unit: 'MINUTES')
-                }
-                stages {
-                  stage('cleanup') {
-                    steps {
-                      // delete everything with this template label
-                      openshift.selector("all", [ template : templateName ]).delete()
-                      // delete any secrets with this template label
-                      if (openshift.selector("secrets", templateName).exists()) {
-                        openshift.selector("secrets", templateName).delete()
-                      }
-                    }
-                  }
-                  stage('create') {
-                    steps {
-                      // create a new application from the templatePath
-                      openshift.newApp(templatePath)
-                    }
-                  }
-                  stage('build') {
-                    steps {
-                      def builds = openshift.selector("bc", templateName).related('builds')
-                      // wait up to 5 minutes for the build to complete
-                      timeout(5) {
-                        builds.untilEach(1) {
-                          return (it.object().status.phase == "Complete")
-                        }
-                      }
-                    }
-                  }
-                  stage('deploy') {
-                    steps {
-                      def rm = openshift.selector("dc", templateName).rollout()
-                      // wait up to 5 minutes for the deployment to complete
-                      timeout(5) {
-                        openshift.selector("dc", templateName).related('pods').untilEach(1) {
-                          return (it.object().status.phase == "Running")
-                        }
-                      }
-                    }
-                  }
-                  stage('tag') {
-                    steps {
-                      // if everything else succeeded, tag the ${templateName}:latest image as ${templateName}-staging:latest
-                      // a pipeline build config for the staging environment can watch for the ${templateName}-staging:latest
-                      // image to change and then deploy it to the staging environment
-                      openshift.tag("${templateName}:latest", "${templateName}-staging:latest")
-                    }
-                  }
-                }
+            agent {
+              node {
+                // spin up a node.js slave pod to run this build on
+                label 'nodejs'
+              }
             }
-          }
-        }
-    type: JenkinsPipeline
+            options {
+                // set a timeout of 20 minutes for this pipeline
+                timeout(time: 20, unit: 'MINUTES')
+            }
+
+            stages {
+                stage('preamble') {
+                    steps {
+                        script {
+                            openshift.withCluster() {
+                                openshift.withProject() {
+                                    echo "Using project: ${openshift.project()}"
+                                }
+                            }
+                        }
+                    }
+                }
+                stage('cleanup') {
+                    steps {
+                        script {
+                            openshift.withCluster() {
+                                openshift.withProject() {
+                                    // delete everything with this template label
+                                    openshift.selector("all", [ template : templateName ]).delete()
+                                    // delete any secrets with this template label
+                                    if (openshift.selector("secrets", templateName).exists()) {
+                                        openshift.selector("secrets", templateName).delete()
+                                    }
+                                }
+                            }
+                        } // script
+                    } // steps
+                } // stage
+                stage('create') {
+                    steps {
+                        script {
+                            openshift.withCluster() {
+                                openshift.withProject() {
+                                    // create a new application from the templatePath
+                                    openshift.newApp(templatePath)
+                                }
+                            }
+                        } // script
+                    } // steps
+                } // stage
+                stage('build') {
+                    steps {
+                        script {
+                            openshift.withCluster() {
+                                openshift.withProject() {
+                                    def builds = openshift.selector("bc", templateName).related('builds')
+                                    // wait up to 5 minutes for the build to complete
+                                    timeout(5) {
+                                        builds.untilEach(1) {
+                                            return (it.object().status.phase == "Complete")
+                                        }
+                                    }
+                                }
+                            }
+                        } // script
+                    } // steps
+                } // stage
+                stage('deploy') {
+                    steps {
+                        script {
+                            openshift.withCluster() {
+                                openshift.withProject() {
+                                    def rm = openshift.selector("dc", templateName).rollout()
+                                    // wait up to 5 minutes for the deployment to complete
+                                    timeout(5) {
+                                        openshift.selector("dc", templateName).related('pods').untilEach(1) {
+                                            return (it.object().status.phase == "Running")
+                                        }
+                                    }
+                                }
+                            }
+                        } // script
+                    } // steps
+                } // stage
+                stage('tag') {
+                    steps {
+                        script {
+                            openshift.withCluster() {
+                                openshift.withProject() {
+                                    // if everything else succeeded, tag the ${templateName}:latest image as ${templateName}-staging:latest
+                                    // a pipeline build config for the staging environment can watch for the ${templateName}-staging:latest
+                                    // image to change and then deploy it to the staging environment
+                                    openshift.tag("${templateName}:latest", "${templateName}-staging:latest")
+                                }
+                            }
+                        } // script
+                    } // steps
+                } // stage
+            } // stages
+        } // pipeline
+      type: JenkinsPipeline
 `)
 
 func examplesJenkinsPipelineNodejsSamplePipelineYamlBytes() ([]byte, error) {
@@ -28967,6 +29355,7 @@ objects:
       metadata:
         name: webconsole
         labels:
+          app: openshift-web-console
           webconsole: "true"
       spec:
         serviceAccountName: webconsole
@@ -28992,10 +29381,17 @@ objects:
               port: 8443
               scheme: HTTPS
           livenessProbe:
-            httpGet:
-              path: /
-              port: 8443
-              scheme: HTTPS
+            exec:
+              command:
+                - /bin/sh
+                - -i
+                - -c
+                - |-
+                  if [[ ! -f /tmp/webconsole-config.hash ]]; then \
+                    md5sum /var/webconsole-config/webconsole-config.yaml > /tmp/webconsole-config.hash; \
+                  elif [[ $(md5sum /var/webconsole-config/webconsole-config.yaml) != $(cat /tmp/webconsole-config.hash) ]]; then \
+                    exit 1; \
+                  fi && curl -k -f https://0.0.0.0:8443/console/
           resources:
             requests:
               cpu: 100m
@@ -29063,61 +29459,6 @@ func installOriginWebConsoleConsoleTemplateYaml() (*asset, error) {
 	}
 
 	info := bindataFileInfo{name: "install/origin-web-console/console-template.yaml", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
-	a := &asset{bytes: bytes, info: info}
-	return a, nil
-}
-
-var _installOriginWebConsoleRbacTemplateYaml = []byte(`apiVersion: template.openshift.io/v1
-kind: Template
-metadata:
-  name: web-console-server-rbac
-parameters:
-- name: NAMESPACE
-  # This namespace cannot be changed. Only `+"`"+`openshift-web-console`+"`"+` is supported.
-  value: openshift-web-console
-objects:
-
-
-# allow grant powers to the webconsole server for cluster inspection
-- apiVersion: rbac.authorization.k8s.io/v1beta1
-  kind: ClusterRole
-  metadata:
-    name: system:openshift:web-console-server
-  rules:
-  - apiGroups:
-    - "servicecatalog.k8s.io"
-    resources:
-    - clusterservicebrokers
-    verbs:
-    - get
-    - list
-    - watch
-
-# Grant the service account for the web console
-- apiVersion: rbac.authorization.k8s.io/v1beta1
-  kind: ClusterRoleBinding
-  metadata:
-    name: system:openshift:web-console-server
-  roleRef:
-    kind: ClusterRole
-    name: system:openshift:web-console-server
-  subjects:
-  - kind: ServiceAccount
-    namespace: ${NAMESPACE}
-    name: webconsole
-`)
-
-func installOriginWebConsoleRbacTemplateYamlBytes() ([]byte, error) {
-	return _installOriginWebConsoleRbacTemplateYaml, nil
-}
-
-func installOriginWebConsoleRbacTemplateYaml() (*asset, error) {
-	bytes, err := installOriginWebConsoleRbacTemplateYamlBytes()
-	if err != nil {
-		return nil, err
-	}
-
-	info := bindataFileInfo{name: "install/origin-web-console/rbac-template.yaml", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -29762,11 +30103,15 @@ var _bindata = map[string]func() (*asset, error){
 	"test/extended/testdata/hello-builder/scripts/run": testExtendedTestdataHelloBuilderScriptsRun,
 	"test/extended/testdata/idling-echo-server-rc.yaml": testExtendedTestdataIdlingEchoServerRcYaml,
 	"test/extended/testdata/idling-echo-server.yaml": testExtendedTestdataIdlingEchoServerYaml,
+	"test/extended/testdata/image/deployment-with-annotation-trigger.yaml": testExtendedTestdataImageDeploymentWithAnnotationTriggerYaml,
 	"test/extended/testdata/image-pull-secrets/dc-with-new-pull-secret.yaml": testExtendedTestdataImagePullSecretsDcWithNewPullSecretYaml,
 	"test/extended/testdata/image-pull-secrets/dc-with-old-pull-secret.yaml": testExtendedTestdataImagePullSecretsDcWithOldPullSecretYaml,
 	"test/extended/testdata/image-pull-secrets/pod-with-new-pull-secret.yaml": testExtendedTestdataImagePullSecretsPodWithNewPullSecretYaml,
 	"test/extended/testdata/image-pull-secrets/pod-with-no-pull-secret.yaml": testExtendedTestdataImagePullSecretsPodWithNoPullSecretYaml,
 	"test/extended/testdata/image-pull-secrets/pod-with-old-pull-secret.yaml": testExtendedTestdataImagePullSecretsPodWithOldPullSecretYaml,
+	"test/extended/testdata/image_ecosystem/perl-hotdeploy/index.pl": testExtendedTestdataImage_ecosystemPerlHotdeployIndexPl,
+	"test/extended/testdata/image_ecosystem/perl-hotdeploy/lib/My/Test.pm": testExtendedTestdataImage_ecosystemPerlHotdeployLibMyTestPm,
+	"test/extended/testdata/image_ecosystem/perl-hotdeploy/perl.json": testExtendedTestdataImage_ecosystemPerlHotdeployPerlJson,
 	"test/extended/testdata/imagestream-jenkins-slave-pods.yaml": testExtendedTestdataImagestreamJenkinsSlavePodsYaml,
 	"test/extended/testdata/imagestreamtag-jenkins-slave-pods.yaml": testExtendedTestdataImagestreamtagJenkinsSlavePodsYaml,
 	"test/extended/testdata/jenkins-plugin/build-job-clone.xml": testExtendedTestdataJenkinsPluginBuildJobCloneXml,
@@ -29878,7 +30223,6 @@ var _bindata = map[string]func() (*asset, error){
 	"examples/quickstarts/cakephp-mysql.json/cakephp-mysql.json": examplesQuickstartsCakephpMysqlJsonCakephpMysqlJson,
 	"install/origin-web-console/console-config.yaml": installOriginWebConsoleConsoleConfigYaml,
 	"install/origin-web-console/console-template.yaml": installOriginWebConsoleConsoleTemplateYaml,
-	"install/origin-web-console/rbac-template.yaml": installOriginWebConsoleRbacTemplateYaml,
 	"install/service-catalog-broker-resources/template-service-broker-registration.yaml": installServiceCatalogBrokerResourcesTemplateServiceBrokerRegistrationYaml,
 	"install/templateservicebroker/apiserver-config.yaml": installTemplateservicebrokerApiserverConfigYaml,
 	"install/templateservicebroker/apiserver-template.yaml": installTemplateservicebrokerApiserverTemplateYaml,
@@ -29994,7 +30338,6 @@ var _bintree = &bintree{nil, map[string]*bintree{
 		"origin-web-console": &bintree{nil, map[string]*bintree{
 			"console-config.yaml": &bintree{installOriginWebConsoleConsoleConfigYaml, map[string]*bintree{}},
 			"console-template.yaml": &bintree{installOriginWebConsoleConsoleTemplateYaml, map[string]*bintree{}},
-			"rbac-template.yaml": &bintree{installOriginWebConsoleRbacTemplateYaml, map[string]*bintree{}},
 		}},
 		"service-catalog-broker-resources": &bintree{nil, map[string]*bintree{
 			"template-service-broker-registration.yaml": &bintree{installServiceCatalogBrokerResourcesTemplateServiceBrokerRegistrationYaml, map[string]*bintree{}},
@@ -30217,12 +30560,26 @@ var _bintree = &bintree{nil, map[string]*bintree{
 				}},
 				"idling-echo-server-rc.yaml": &bintree{testExtendedTestdataIdlingEchoServerRcYaml, map[string]*bintree{}},
 				"idling-echo-server.yaml": &bintree{testExtendedTestdataIdlingEchoServerYaml, map[string]*bintree{}},
+				"image": &bintree{nil, map[string]*bintree{
+					"deployment-with-annotation-trigger.yaml": &bintree{testExtendedTestdataImageDeploymentWithAnnotationTriggerYaml, map[string]*bintree{}},
+				}},
 				"image-pull-secrets": &bintree{nil, map[string]*bintree{
 					"dc-with-new-pull-secret.yaml": &bintree{testExtendedTestdataImagePullSecretsDcWithNewPullSecretYaml, map[string]*bintree{}},
 					"dc-with-old-pull-secret.yaml": &bintree{testExtendedTestdataImagePullSecretsDcWithOldPullSecretYaml, map[string]*bintree{}},
 					"pod-with-new-pull-secret.yaml": &bintree{testExtendedTestdataImagePullSecretsPodWithNewPullSecretYaml, map[string]*bintree{}},
 					"pod-with-no-pull-secret.yaml": &bintree{testExtendedTestdataImagePullSecretsPodWithNoPullSecretYaml, map[string]*bintree{}},
 					"pod-with-old-pull-secret.yaml": &bintree{testExtendedTestdataImagePullSecretsPodWithOldPullSecretYaml, map[string]*bintree{}},
+				}},
+				"image_ecosystem": &bintree{nil, map[string]*bintree{
+					"perl-hotdeploy": &bintree{nil, map[string]*bintree{
+						"index.pl": &bintree{testExtendedTestdataImage_ecosystemPerlHotdeployIndexPl, map[string]*bintree{}},
+						"lib": &bintree{nil, map[string]*bintree{
+							"My": &bintree{nil, map[string]*bintree{
+								"Test.pm": &bintree{testExtendedTestdataImage_ecosystemPerlHotdeployLibMyTestPm, map[string]*bintree{}},
+							}},
+						}},
+						"perl.json": &bintree{testExtendedTestdataImage_ecosystemPerlHotdeployPerlJson, map[string]*bintree{}},
+					}},
 				}},
 				"imagestream-jenkins-slave-pods.yaml": &bintree{testExtendedTestdataImagestreamJenkinsSlavePodsYaml, map[string]*bintree{}},
 				"imagestreamtag-jenkins-slave-pods.yaml": &bintree{testExtendedTestdataImagestreamtagJenkinsSlavePodsYaml, map[string]*bintree{}},

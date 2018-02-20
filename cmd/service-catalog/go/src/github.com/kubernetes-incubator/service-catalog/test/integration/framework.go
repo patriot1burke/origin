@@ -20,11 +20,13 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"net/http"
 	"testing"
 	"time"
 
+	restfullog "github.com/emicklei/go-restful/log"
 	"github.com/golang/glog"
 
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -35,6 +37,7 @@ import (
 
 	"github.com/kubernetes-incubator/service-catalog/cmd/apiserver/app/server"
 	_ "github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/install"
+	_ "github.com/kubernetes-incubator/service-catalog/pkg/apis/settings/install"
 	servicecatalogclient "github.com/kubernetes-incubator/service-catalog/pkg/client/clientset_generated/clientset"
 	serverstorage "github.com/kubernetes-incubator/service-catalog/pkg/registry/servicecatalog/server"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -42,6 +45,8 @@ import (
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
+	// silence the go-restful webservices swagger logger
+	restfullog.SetLogger(log.New(ioutil.Discard, "[restful]", log.LstdFlags|log.Lshortfile))
 }
 
 type TestServerConfig struct {
@@ -98,6 +103,7 @@ func withConfigGetFreshApiserverAndClient(
 			AuditOptions:            genericserveroptions.NewAuditOptions(),
 			DisableAuth:             true,
 			StandaloneMode:          true, // this must be true because we have no kube server for integration.
+			ServeOpenAPISpec:        true,
 		}
 		options.SecureServingOptions.BindPort = securePort
 		options.SecureServingOptions.ServerCert.CertDirectory = certDir

@@ -21,7 +21,7 @@ import (
 
 	authorizationclient "github.com/openshift/origin/pkg/authorization/generated/internalclientset"
 	"github.com/openshift/origin/pkg/cmd/flagtypes"
-	configapi "github.com/openshift/origin/pkg/cmd/server/api"
+	configapi "github.com/openshift/origin/pkg/cmd/server/apis/config"
 	"github.com/openshift/origin/pkg/cmd/server/bootstrappolicy"
 	"github.com/openshift/origin/pkg/cmd/server/etcd/etcdserver"
 	kubernetes "github.com/openshift/origin/pkg/cmd/server/kubernetes/master"
@@ -118,7 +118,6 @@ func (o *DebugAPIServerOptions) StartAPIServer(masterConfig configapi.MasterConf
 
 	kubeMasterConfig, err := kubernetes.BuildKubernetesMasterConfig(
 		openshiftConfig.Options,
-		openshiftConfig.RequestContextMapper,
 		openshiftConfig.KubeAdmissionControl,
 		openshiftConfig.Authenticator,
 		openshiftConfig.Authorizer,

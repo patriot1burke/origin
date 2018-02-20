@@ -17,7 +17,6 @@ import (
 	buildstrategyrestrictions "github.com/openshift/origin/pkg/build/admission/strategyrestrictions"
 	imageadmission "github.com/openshift/origin/pkg/image/admission"
 	imagepolicy "github.com/openshift/origin/pkg/image/admission/imagepolicy"
-	imagequalify "github.com/openshift/origin/pkg/image/admission/imagequalify"
 	ingressadmission "github.com/openshift/origin/pkg/ingress/admission"
 	projectlifecycle "github.com/openshift/origin/pkg/project/admission/lifecycle"
 	projectnodeenv "github.com/openshift/origin/pkg/project/admission/nodeenv"
@@ -33,12 +32,11 @@ import (
 	expandpvcadmission "k8s.io/kubernetes/plugin/pkg/admission/persistentvolume/resize"
 	storageclassdefaultadmission "k8s.io/kubernetes/plugin/pkg/admission/storageclass/setdefault"
 
-	imagepolicyapi "github.com/openshift/origin/pkg/image/admission/imagepolicy/api"
-	imagequalifyapi "github.com/openshift/origin/pkg/image/admission/imagequalify/api"
-	overrideapi "github.com/openshift/origin/pkg/quota/admission/clusterresourceoverride/api"
+	imagepolicyapi "github.com/openshift/origin/pkg/image/admission/apis/imagepolicy"
+	overrideapi "github.com/openshift/origin/pkg/quota/admission/apis/clusterresourceoverride"
 	"k8s.io/apiserver/pkg/admission/plugin/namespace/lifecycle"
 
-	configlatest "github.com/openshift/origin/pkg/cmd/server/api/latest"
+	configlatest "github.com/openshift/origin/pkg/cmd/server/apis/config/latest"
 )
 
 // TODO register this per apiserver or at least per process
@@ -62,7 +60,6 @@ func registerOpenshiftAdmissionPlugins(plugins *admission.Plugins) {
 	buildstrategyrestrictions.Register(plugins)
 	imageadmission.Register(plugins)
 	imagepolicy.Register(plugins)
-	imagequalify.Register(plugins)
 	ingressadmission.Register(plugins)
 	projectlifecycle.Register(plugins)
 	projectnodeenv.Register(plugins)
@@ -112,7 +109,6 @@ var (
 		"PodNodeConstraints",
 		overrideapi.PluginName,
 		imagepolicyapi.PluginName,
-		imagequalifyapi.PluginName,
 		"AlwaysPullImages",
 		"ImagePolicyWebhook",
 		"openshift.io/RestrictSubjectBindings",

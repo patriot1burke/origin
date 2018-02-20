@@ -20,6 +20,8 @@ import (
 	"github.com/golang/glog"
 	"github.com/kubernetes-incubator/service-catalog/pkg/registry/servicecatalog/server"
 	"k8s.io/apiserver/pkg/registry/generic"
+	"k8s.io/apiserver/pkg/registry/generic/registry"
+	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/storage"
 )
@@ -79,7 +81,7 @@ type completedEtcdConfig struct {
 
 // NewServer creates a new server that can be run. Returns a non-nil error if the server couldn't
 // be created
-func (c completedEtcdConfig) NewServer() (*ServiceCatalogAPIServer, error) {
+func (c completedEtcdConfig) NewServer(stopCh <-chan struct{}) (*ServiceCatalogAPIServer, error) {
 	s, err := createSkeletonServer(c.genericConfig)
 	if err != nil {
 		return nil, err
@@ -104,12 +106,26 @@ func (c completedEtcdConfig) NewServer() (*ServiceCatalogAPIServer, error) {
 			glog.Warningf("Skipping API group %v because it is not enabled", provider.GroupName())
 			continue
 		} else if err != nil {
+			glog.Errorf("Error initializing storage for provider %v: %v", provider.GroupName(), err)
 			return nil, err
 		}
 
 		glog.V(4).Infof("Installing API group %v", provider.GroupName())
 		if err := s.GenericAPIServer.InstallAPIGroup(groupInfo); err != nil {
 			glog.Fatalf("Error installing API group %v: %v", provider.GroupName(), err)
+		} else {
+			// we've sucessfully installed, so hook the stopCh to the destroy func of all the sucessfully installed apigroups
+			for _, mappings := range groupInfo.VersionedResourcesStorageMap { // gv to resource mappings
+				for _, storage := range mappings { // resource name (brokers, brokers/status) to backing storage
+					go func(store rest.Storage) {
+						s, ok := store.(*registry.Store)
+						if ok {
+							<-stopCh
+							s.DestroyFunc()
+						}
+					}(storage)
+				}
+			}
 		}
 	}
 
